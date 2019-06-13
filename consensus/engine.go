@@ -4,12 +4,16 @@ import (
 	"../utils"
 )
 
-//#########################################################################
+//###################################################################################
 // Consensus Engine Typeclass
-//#########################################################################
-type EngineI interface {
+//###################################################################################
+type engineI interface {
 	// TODO design a suit of `consensus engine interfaces`
 }
 type Engine struct {
 	Name utils.Name
+}
+
+func MakeEngine(name utils.Name, ei engineI) *Engine {
+	return &Engine{name}
 }

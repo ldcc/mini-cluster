@@ -11,7 +11,7 @@ type Node struct {
 	Addr *net.TCPAddr
 }
 
-func MakeNode(id, addr string) Node {
+func MakeNode(id, addr string) *Node {
 	var tcpaddr, _ = net.ResolveTCPAddr("tcp", addr)
-	return Node{utils.Name(id), tcpaddr}
+	return &Node{utils.Name(id), tcpaddr}
 }
