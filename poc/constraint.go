@@ -30,7 +30,7 @@ type Constraint struct {
 
 func makeConstraint(name utils.Name, ci constraintI, conn *Connector) *Constraint {
 	connectors := make(connectors)
-	connectors[name] = conn
+	connectors[conn.name] = conn
 	self := &Constraint{name, connectors, ci.process,
 		func(name utils.Name) {
 			for cname, conn := range connectors {
@@ -71,8 +71,8 @@ func (self Probe) forget(name utils.Name) {
 }
 
 func (self Probe) print(value interface{}) {
-	conn := value.(Connector)
-	fmt.Printf("Probe: %s = %v", conn.name, conn.GetVal())
+	conn := value.(*Connector)
+	fmt.Printf("Probe: %s stores: %v", conn.name, conn.GetVal())
 }
 
 //###################################################################################
@@ -96,11 +96,9 @@ func (self Node) process(name utils.Name) {
 	sender := self.constr.connectors[name]
 	for cname, conn := range self.constr.connectors {
 		if cname != name {
-			fmt.Println()
-			conn.AddVal(sender.GetVal())
+			conn.AddVal(sender.value)
 		}
 	}
-	fmt.Println(self.node.Name)
 	// TODO do some proccess
 
 }

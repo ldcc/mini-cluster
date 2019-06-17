@@ -1,9 +1,12 @@
 package utils
 
+import "fmt"
+
 type Name Hash
 type Hash string // [32]byte
 
 type Tx struct {
+	Hash Hash
 }
 
 type TxSet map[Hash]*Tx
@@ -19,7 +22,7 @@ func (self TxSet) HasTx() bool {
 }
 
 func (self TxSet) AddTx(tx Tx) {
-	self[SHA3(tx)] = &tx
+	self[tx.Hash] = &tx
 }
 
 func (self TxSet) Copy() TxSet {
@@ -30,6 +33,14 @@ func (self TxSet) Copy() TxSet {
 		}
 	}
 	return txSet
+}
+
+func (self TxSet) String() string {
+	var format = "TxSet: {"
+	for k, v := range self {
+		format = fmt.Sprintf(format+"\n\t%v: %v,", k, *v)
+	}
+	return format + "\n}"
 }
 
 type TxList []*Tx
@@ -50,11 +61,19 @@ func (self *TxList) AddTx(tx Tx) {
 func (self *TxList) Copy() TxList {
 	var txList = make(TxList, len(*self))
 	if self.HasTx() {
-		for e := range *self {
+		for _, e := range *self {
 			txList = append(txList, e)
 		}
 	}
 	return txList
+}
+
+func (self TxList) String() string {
+	var format = "TxList: {"
+	for k, v := range self {
+		format = fmt.Sprintf(format+"\n\t%No.n: %v,", k, *v)
+	}
+	return format + "\n}"
 }
 
 type Block struct {

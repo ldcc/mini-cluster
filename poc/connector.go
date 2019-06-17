@@ -8,13 +8,19 @@ import (
 type connectors map[utils.Name]*Connector
 type Connector struct {
 	constrs constraints
-	//value   utils.Tx
-	value utils.TxSet
-	name  utils.Name
+	stores  utils.TxSet
+	value   utils.Tx
+	pline   chan *utils.Tx
+	name    utils.Name
 }
 
 func MakeConnector(name utils.Name) *Connector {
-	return &Connector{name: name, value: make(utils.TxSet)}
+	return &Connector{
+		constrs: make(constraints),
+		stores:  make(utils.TxSet),
+		pline:   make(chan *utils.Tx),
+		name:    name,
+	}
 }
 
 func (self Connector) Connect(constr *Constraint) {
@@ -28,25 +34,27 @@ func (self Connector) Connect(constr *Constraint) {
 //}
 
 func (self Connector) HasVal() bool {
-	return self.value.HasTx()
+	return self.stores.HasTx()
 }
 
 func (self Connector) GetVal() utils.TxSet {
-	return self.value.Copy()
+	return self.stores.Copy()
 }
 
 // TODO add mutex lock
 func (self Connector) AddVal(tx utils.Tx) {
-	self.value.AddTx(tx)
+	self.stores.AddTx(tx)
+	//self.pline <- &tx
+	self.value = tx
 	for _, constr := range self.constrs {
-		go constr.Process(self.name)
+		constr.Process(self.name)
 	}
 }
 
-// TODO add mutex lock
+//// TODO add mutex lock
 func (self Connector) ClsVal() {
 	if self.HasVal() {
-		self.value.Clean()
+		self.stores.Clean()
 	}
 }
 
@@ -54,7 +62,7 @@ func (self Connector) ClsVal() {
 func (self Connector) Forget(name utils.Name) {
 	for cname, constr := range self.constrs {
 		if cname != name {
-			go func() {
+			func() {
 				constr.Forget(self.name)
 				constr.Process(self.name)
 			}()
