@@ -1,109 +1,93 @@
 %%
 %% Author: ldc
-%% 6/12/19
+%% 6/17/19
 %%
 
-% Preamble
-\documentclass[tikz]{standalone}
-\pagestyle{empty}
+%% Preamble
+\documentclass[usenames,dvipsnames,tikz]{article}
 
-% Packages
+%% Dependences
 \usepackage{amsmath}
 \usepackage{tikz}
 \usepackage{xeCJK}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{color}
+\usepackage{xcolor}
+\usepackage[b4paper,landscape,nohead,margin=2cm]{geometry}
+\usetikzlibrary{matrix,shapes,mindmap,shadows,backgrounds}
 
-% Settings
-\definecolor{light-gray}{gray}{0.95}
-\definecolor{codegreen}{rgb}{0,0.6,0}
-\definecolor{codegray}{rgb}{0.5,0.5,0.5}
-\definecolor{codepurple}{rgb}{0.58,0,0.82}
-\usetikzlibrary{mindmap,backgrounds}
+%% Definition
+\definecolor{shallowyellow}{RGB}{245,245,204}
+\def\anno#1#2{\node [anno] at (#2) {\textbf{\large #1}}}
 
-% Document
+%% Settings
+\pagestyle{empty}
+\pagecolor{shallowyellow}
+\tikzstyle{root}+=[font=\Huge]
+\tikzstyle{node}+=[concept color=teal]
+\tikzstyle{cons}+=[concept color=purple]
+\tikzstyle{chain}+=[concept color=darkgray]
+\tikzstyle{anno}=[annotation,fill=black!50,above,xshift=-5cm,text width=8cm,inner sep=4mm]
+\tikzstyle{group}+=[mindmap, grow cyclic,concept color=darkgray,every node/.append style={concept,circular drop shadow}]
+\tikzstyle{catethe}=[matrix of math nodes,row sep=3em,column sep=4em,minimum width=2em,text=black]
+\tikzstyle{every node}+=[text=white,scale=1.2]
+\tikzstyle{level 1 concept}+=[level distance=5.2cm,font=\Large]
+\tikzstyle{level 2 concept}+=[level distance=3.8cm,font=\large]
+%\tikzstyle{level 3 concept}+=[level distance=2.3cm,font=\scriptsize,rotate=30]
+%\tikzstyle{level 4 concept}+=[level distance=1.6cm,font=\tiny]
+
+%% Document
 \begin{document}
-  \tikzstyle{every node}+=[concept,text=white,scale=1]
-  \tikzstyle{level 1 concept}+=[level distance=5.7cm,sibling angle=100,font=\Large]
-  \tikzstyle{level 2 concept}+=[level distance=3.8cm,sibling angle=90,font=\large]
-  \tikzstyle{level 3 concept}+=[level distance=2.3cm,sibling angle=72,font=\scriptsize,rotate=30]
-  \tikzstyle{level 4 concept}+=[level distance=1.6cm,sibling angle=140,font=\tiny]
-  \tikzstyle{unreal}+=[concept color=teal,every child/.style={concept color=teal!70}]
-  \tikzstyle{real}+=[concept color=purple,every child/.style={concept color=purple!70}]
   \begin{tikzpicture}
-    %  \begin{scope}
-    %    \path[mindmap,grow cyclic,every node/.append style={scale=1.1}]
-    %    node {}
-    %    child {node (inmutative) {}}
-    %    child {
-    %    node {}
-    %    child {
-    %    node (taigen) {}
-    %    child {node {}
-    %    child {node {}}
-    %    child {node {}}}}
-    %    child {
-    %    node (others) {}
-    %    child {node {}}
-    %    child {node {}}
-    %    child {node {}}
-    %    child {node {}}}
-    %    child {
-    %    node (yougen) {}
-    %    child {node {}}
-    %    child {node {}}
-    %    child {node {}}}}
-    %    child {node (mutative) {}}
-    %    child {
-    %    node {}
-    %    child {node (aux) {}}
-    %    child {node (part) {}}};
-    %    \path (mutative) to [circle connection bar] (yougen);
-    %    \path (mutative) to [circle connection bar] (aux);
-    %    \path (inmutative) to [circle connection bar] (taigen);
-    %    \path (inmutative) to [circle connection bar] (others);
-    %    \path (inmutative) to [circle connection bar] (part);
-    %    \begin{scope}[->, concept connection, rotate=-40, purple]
-    %      \draw (yougen) [in=300, out=330, looseness=8] edge (yougen);
-    %      \draw (yougen) [in=130, out=220] edge (taigen);
-    %      \draw (yougen) [in=90, out=0] edge (others);
-    %    \end{scope}
-    %  \end{scope}
-
-    \begin{scope}
-      \path[mindmap, grow cyclic, concept color=darkgray]
-      node[font=\huge] {词性系统}
-      child[concept color=gray] {node (inmutative) {非活用}}
-      child[real] {
-      node {自立语}
-      child {
-      node (taigen) {体言}
-      child {node (n) {名词}
-      child {node (pro) {代词}}
-      child {node (num) {数词}}}}
-      child {
-      node (others) {其它}
-      child {node (adv) {副词}}
-      child {node (pre) {连体词}}
-      child {node (conj) {接续词}}
-      child {node (interj) {感动词}}}
-      child {
-      node (yougen) {用言}
-      child {node (v) {动词}}
-      child {node (adj) {形容词}}
-      child {node (adj-n) {形容动词}}}}
-      child[concept color=red] {node (mutative) {活用}}
-      child[unreal] {
-      node {付属语}
-      child {node (aux) {助动词}}
-      child {node (part) {助词}}};
-      \path (mutative) to [circle connection bar switch color = from (red) to (purple!70)] (yougen);
-      \path (mutative) to [circle connection bar switch color = from (red) to (teal!70)] (aux);
-      \path (inmutative) to [circle connection bar switch color = from (gray) to (purple!70)] (taigen);
-      \path (inmutative) to [circle connection bar switch color = from (gray) to (purple!70)] (others);
-      \path (inmutative) to [circle connection bar switch color = from (gray) to (teal!70)] (part);
-    \end{scope}
+    \path[group]
+    node[root] (chain1) at (0,0) {$Chain1$}
+    child[node] {node (node1) {$Node1$}}
+    child[node] {node (node2) {$Node2$}}
+    child[cons] {node (pow) {$PoW$}};
+    \path[group]
+    node[root] (chain2) at (10,-7) {$Chain2$}
+    child[node] {node (node3) {$Node3$}}
+    child[node] {node (node4) {$Node4$}}
+    child[node] {node (node5) {$Node5$}}
+    child[cons] {node (pos) {$PoS$}};
+    \path[group]
+    node[root] (chain3) at (-12,-4) {$Chain3$}
+    child[cons,clockwise from=90] {node (poa) {$PoA$}};
+    \path (node1) to [circle connection bar switch color = from (teal) to (darkgray)] (chain2);
+    \path (node1) to [circle connection bar switch color = from (teal) to (darkgray)] (chain3);
+    \path (node3) to [circle connection bar switch color = from (teal) to (darkgray)] (chain3);
+    \path (chain1) to [circle connection bar switch color = from (darkgray) to (darkgray)] (chain2);
+    \path (chain1) to [circle connection bar switch color = from (darkgray) to (darkgray)] (chain3);
+    \anno{假设一个运行于 BCID2.0 下的拓扑网络中的所有节点呈现以下分布}{chain1.north};
   \end{tikzpicture}
+  \newpage
+
+  \begin{tikzpicture}
+    \path[group,node,level 1/.append style={sibling angle=120}]
+    node[root] (node) {$Node1$}
+    child[chain] {node {$Chain1$} child[cons] {node {$PoW$}}}
+    child[chain] {node {$Chain2$} child[cons] {node {$PoS$}}}
+    child[chain] {node {$Chain3$} child[cons] {node {$PoA$}}};
+    \anno{那么对于单个节点而言，比如 Node1 ，它的运行环境是这样的}{node.west};
+  \end{tikzpicture}
+  \newpage
+
+  \begin{tikzpicture}
+    \path[group]
+    node[root] (group) {ChainX}
+    child[node] {node {$Node1$} child[node] {node {$Node2$}}}
+    child[cons] {node {$PoX$}};
+    \anno{对于一个局部共识 G1，当节点 Node2 尝试通过连接 Node1 加入到共识中时}{group.north};
+  \end{tikzpicture}
+
+%  \begin{tikzpicture}
+%    \matrix(m)[catethe] {
+%    Node_1 & Node_2 \\
+%    Chain_X & x       \\};
+%    %    \path[-stealth]
+%    %    (m-1-1) edge node [left]
+%  \end{tikzpicture}
+
 
 \end{document}
