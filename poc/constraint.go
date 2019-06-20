@@ -28,9 +28,8 @@ type Constraint struct {
 	Connect    connect
 }
 
-func makeConstraint(name utils.Name, ci constraintI, conn *Connector) *Constraint {
+func makeConstraint(name utils.Name, ci constraintI, conns ...*Connector) *Constraint {
 	connectors := make(connectors)
-	connectors[conn.name] = conn
 	self := &Constraint{name, connectors, ci.process,
 		func(name utils.Name) {
 			for cname, conn := range connectors {
@@ -44,7 +43,12 @@ func makeConstraint(name utils.Name, ci constraintI, conn *Connector) *Constrain
 			connectors[conn.name] = conn
 		},
 	}
-	conn.Connect(self)
+	for _, conn := range conns {
+		if conn != nil {
+			connectors[conn.name] = conn
+			conn.Connect(self)
+		}
+	}
 	return self
 }
 
@@ -56,10 +60,10 @@ type Probe struct {
 	constr *Constraint
 }
 
-func MakeProbe(name utils.Name, conn *Connector) *Probe {
+func MakeProbe(name utils.Name, conns ...*Connector) *Constraint {
 	self := &Probe{}
-	self.constr = makeConstraint(name, self, conn)
-	return self
+	self.constr = makeConstraint(name, self, conns...)
+	return self.constr
 }
 
 func (self Probe) process(name utils.Name) {
@@ -84,12 +88,10 @@ type Node struct {
 	node   *p2pnet.Node
 }
 
-func MakeNode(node *p2pnet.Node, conn *Connector) *Node {
+func MakeNode(node *p2pnet.Node, conns ...*Connector) *Constraint {
 	self := &Node{node: node}
-	self.constr = makeConstraint(node.Name, self, conn)
-	self.constr.connectors[conn.name] = conn
-	conn.Connect(self.constr)
-	return self
+	self.constr = makeConstraint(node.Name, self, conns...)
+	return self.constr
 }
 
 func (self Node) process(name utils.Name) {
@@ -112,14 +114,14 @@ func (self Node) forget(name utils.Name) {
 //###################################################################################
 
 type Blockchain struct {
-	Constr *Constraint
+	constr *Constraint
 	chain  *utils.Chain
 }
 
-func MakeBlcokchain(chain *utils.Chain, conn *Connector) *Blockchain {
+func MakeBlcokchain(chain *utils.Chain, conns ...*Connector) *Constraint {
 	self := &Blockchain{chain: chain}
-	self.Constr = makeConstraint(utils.Name(chain.RootHash), self, conn)
-	return self
+	self.constr = makeConstraint(utils.Name(chain.RootHash), self, conns...)
+	return self.constr
 }
 
 func (self Blockchain) process(name utils.Name) {
@@ -140,10 +142,10 @@ type Consensus struct {
 	engine *consensus.Engine
 }
 
-func MakeConsensus(engine *consensus.Engine, conn *Connector) *Consensus {
+func MakeConsensus(engine *consensus.Engine, conns ...*Connector) *Constraint {
 	self := &Consensus{engine: engine}
-	self.constr = makeConstraint(engine.Name, self, conn)
-	return self
+	self.constr = makeConstraint(engine.Name, self, conns...)
+	return self.constr
 }
 
 func (self Consensus) process(name utils.Name) {
