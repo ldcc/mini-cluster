@@ -11,13 +11,15 @@
 \usepackage[b4paper,landscape,nohead,margin=2cm]{geometry}
 \usepackage{tikz}
 \usepackage{tikz-cd}
+\usepackage{amsfonts}
 \usetikzlibrary{shapes,mindmap,shadows,backgrounds}
 \usetikzlibrary{cd,matrix}
 
 %% Settings
 \definecolor{shallowyellow}{RGB}{245,245,204}
-\def\anno#1#2#3{\node [anno,#3] at (#2) {\textbf{\large #1}}}
-\def\annop#1#2{\node [anno,xshift=-5cm] at (#2) {\textbf{\large #1}}}
+\def\anno#1#2#3{\node[anno,#3] at (#2) {\textbf{\large #1}}}
+\def\annop#1#2{\node[anno,xshift=-5cm] at (#2) {\textbf{\large #1}}}
+
 \makeatletter
 \tikzset{
 column sep/.code=\def\pgfmatrixcolumnsep{\pgf@matrix@xscale*(#1)},
@@ -39,25 +41,26 @@ matrix scale/.style={/tikz/matrix xscale={#1},/tikz/matrix yscale={#1}}}
 \tikzstyle{anno}=[annotation,everynode,above,fill=black!50,text width=8cm,inner sep=4mm]
 \tikzstyle{group}+=[mindmap,grow cyclic,concept color=darkgray,every node/.append style={everynode,concept}]
 \tikzstyle{catethe}=[inner sep=12mm,row sep=2em,column sep=3em]
+\tikzstyle{catebg}=[scale=2,fill=black!15,rounded corners=4mm]
 \tikzstyle{everynode}+=[text=white,scale=1.2,circular drop shadow]
-\tikzstyle{level 1 concept}+=[level distance=5.2cm,font=\Large]
-\tikzstyle{level 2 concept}+=[level distance=3.8cm,font=\large]
-%\tikzstyle{level 3 concept}+=[level distance=2.3cm,font=\scriptsize,rotate=30]
-%\tikzstyle{level 4 concept}+=[level distance=1.6cm,font=\tiny]
+\tikzstyle{level 1 concept}+=[level distance=5.2cm,font=\huge]
+\tikzstyle{level 2 concept}+=[level distance=3.8cm,font=\Large]
+%\tikzstyle{level 3 concept}+=[level distance=2.3cm,font=\large
+%\tikzstyle{level 4 concept}+=[level distance=1.6cm,font=\scriptsize]
 
 %% Document
 \begin{document}
   \begin{tikzpicture}
     \path[group]
     node[root] (chain1) at (0,0) {$Chain_1$}
-    child[node] {node (node1) {$Node_1$}}
-    child[node] {node (node2) {$Node_2$}}
+    child[node] {node (node1) {$N_1$}}
+    child[node] {node (node2) {$N_2$}}
     child[cons] {node (pow) {$PoW$}};
     \path[group]
     node[root] (chain2) at (10,-7) {$Chain_2$}
-    child[node] {node (node3) {$Node_3$}}
-    child[node] {node (node4) {$Node_4$}}
-    child[node] {node (node5) {$Node_5$}}
+    child[node] {node (node3) {$N_3$}}
+    child[node] {node (node4) {$N_4$}}
+    child[node] {node (node5) {$N_5$}}
     child[cons] {node (pos) {$PoS$}};
     \path[group]
     node[root] (chain3) at (-12,-4) {$Chain_3$}
@@ -67,62 +70,112 @@ matrix scale/.style={/tikz/matrix xscale={#1},/tikz/matrix yscale={#1}}}
     \path (node3) to [circle connection bar switch color = from (teal) to (darkgray)] (chain3);
     \path (chain1) to [circle connection bar switch color = from (darkgray) to (darkgray)] (chain2);
     \path (chain1) to [circle connection bar switch color = from (darkgray) to (darkgray)] (chain3);
-    \annop{假设一个运行于 BCID2.0 下的拓扑网络中的所有节点呈现以下分布}{chain1.north};
+    \annop{假设一个运行于 BCID2.0 下的拓扑网络中的所有节点呈现以下分布：}{chain1.north};
   \end{tikzpicture}
   \newpage
 
   \begin{tikzpicture}
     \path[group,node,level 1/.append style={sibling angle=120}]
-    node[root] (node) {$Node_1$}
-    child[chain] {node {$Chain_1$} child[cons] {node {$PoW$}}}
-    child[chain] {node {$Chain_2$} child[cons] {node {$PoS$}}}
-    child[chain] {node {$Chain_3$} child[cons] {node {$PoA$}}};
-    \annop{那么对于单个节点而言，比如 ${\mathrm{Node_1}}$ ，它的运行环境是这样的}{node.west};
+    node[root] (node) {$Node$}
+    child[chain] {node {$C_3$} child[cons] {node {$PoA$}}}
+    child[chain] {node {$C_2$} child[cons] {node {$PoS$}}}
+    child[chain] {node {$C_1$} child[cons] {node {$PoW$}}};
+    \annop{联系上下文，对于单个节点而言，如 ${\mathbf{N_1}}$，它的运行环境是这样的：}{node.west};
   \end{tikzpicture}
   \newpage
 
   \begin{tikzpicture}
-    \path
-    node[scale=2,fill=black!15,rounded corners=4mm] (cate) {
+    \path node[catebg] (cate) {
     \begin{tikzcd}[catethe,matrix scale=1.4]
-      Node_2 \ar[r, "f"] \ar[rd, orange, "g \circ f"] & Node_1 \ar[d, teal, "g"] \\
-      PoX & Chain \ar[l, red] & Node_a \ar[l, teal] \\
-      & Node_c \ar[u, teal] & Node_b \ar[lu, teal]
+      N_b \ar[r, orange, "f"] \ar[rd, teal!50!orange, "g \circ f"] & N_a \ar[d, teal, "g"] \\
+      PoX & Chain \ar[l, red] & N \ar[l, teal] \\
+      & N \ar[u, teal] & N \ar[lu, teal]
     \end{tikzcd}};
-    \anno{对于一个局部共识 G1，当节点 $\mathrm{Node_2}$ 尝试通过连接 $\mathrm{Node_1}$ 加入到共识中时}{cate.north}{yshift=1cm};
+    \anno{对于一个局部共识 $\mathbf{G}$，当节点 $\mathbf{N_b}$ 尝试通过连接 $\mathbf{N_a}$ 加入到共识中时：}{cate.north}{yshift=1cm};
   \end{tikzpicture}
   \qquad\qquad\qquad\qquad\qquad
   \begin{tikzpicture}
     \path[group]
     node[root] {Chain}
     child[cons] {node {$PoX$}}
-    child[node] {node {$Node_c$}}
-    child[node] {node {$Node_b$}}
-    child[node] {node {$Node_a$}}
-    child[node] {node {$Node_1$} child[node,concept color=orange] {node {$Node_2$}}};
+    child[node] {node {$N$}}
+    child[node] {node {$N$}}
+    child[node] {node {$N$}}
+    child[node] {node {$N_a$} child[node,concept color=orange] {node {$N_b$}}};
   \end{tikzpicture}
   \newpage
 
   \begin{tikzpicture}
-    \path
-    node[scale=2,fill=black!15,rounded corners=4mm] (cate) {
+    \path node[catebg] (cate) {
     \begin{tikzcd}[catethe,matrix scale=1.4]
-      Node_2 \ar[rd, teal, "h"] & Node_1 \ar[d, teal, "g"] \\
-      PoX & Chain \ar[l, red] & Node_a \ar[l, teal] \\
-      & Node_c \ar[u, teal] & Node_b \ar[lu, teal]
+      N_b \ar[rd, teal, "h"] & N_a \ar[d, teal, "g"] \\
+      PoX & Chain \ar[l, red] & N \ar[l, teal] \\
+      & N \ar[u, teal] & N \ar[lu, teal]
     \end{tikzcd}};
-    \anno{$\mathrm{Node_2}$ 首先需要完成惯例的安全检查，之后未同步的数据会从多个节点分块获取，且无需经由 $\mathrm{Node_1}$ 进行中转}{cate.north}{yshift=1cm};
+    \anno{$\mathbf{N_b}$ 完成惯例的安全检查后，所有未同步数据会分批次从多个节点分块获取，且无需经由 $\mathbf{N_a}$ 进行中转：}{cate.north}{yshift=1cm};
   \end{tikzpicture}
   \qquad\qquad\qquad\qquad\qquad
   \begin{tikzpicture}
     \path[group]
     node[root] {Chain}
     child[cons] {node {$PoX$}}
-    child[node] {node {$Node_c$}}
-    child[node] {node {$Node_b$}}
-    child[node] {node {$Node_a$}}
-    child[node] {node {$Node_1$}}
-    child[node] {node {$Node_2$}};
+    child[node] {node {$N$}}
+    child[node] {node {$N$}}
+    child[node] {node {$N$}}
+    child[node] {node {$N_a$}}
+    child[node] {node {$N_b$}};
+  \end{tikzpicture}
+  \newpage
+
+  \begin{tikzpicture}
+    \path[group,node,level 1/.append style={sibling angle=120}]
+    node[root] (node) {$Node$}
+    child[chain] {node {$C_2$} child[cons] {node {$PoA$}}}
+    child[chain] {node {$C_1$} child[cons] {node {$PoS$}}};
+    \anno{当需要进行某些算法替换时，只需将其连接到一个新的约束，此过程可由消息控制且无需生成硬分叉，将来或许能藉此使区块链拥有热更新的能力。
+    \\下面展示为 ${\mathbf{C_1}}$ 更换一种共识机制：}{node.east}{xshift=6cm,yshift=-1.5cm};
+  \end{tikzpicture}
+  \qquad\qquad\qquad
+  \begin{tikzpicture}
+    \path[group,node,level 1/.append style={sibling angle=120}]
+    node[root] {$Node$}
+    child[chain] {node {$C_2$} child[cons] {node {$PoA$}}}
+    child[chain] {
+    node {$C_1$}
+    child[cons] {node {$PoA$}}
+    child[cons] {node (pos) {$PoS$}}};
+    \anno{$\mathbf{PoS}$ 在此处可以选择 $Forget$、$Disconnect$，也可以什么事都不做，视情况而断言。}{pos.north}{yshift=.2cm};
+  \end{tikzpicture}
+  \newpage
+
+  \begin{tikzpicture}
+    \path[group,node,level 1/.append style={sibling angle=120},rotate=90]
+    node[root] {$Node$}
+    child[chain] {node {$C_2$} child[cons] {node {$PoA$}}}
+    child[chain] {
+    node {$C_1$}
+    child[cons] {node {$PoA$}}
+    child[cons] {node {$PoS$}}};
+    \anno{$\mathbf{C_1}$ 和 $\mathbf{C_2}$ 很明显都使用了同一种共识算法，这时通过一些变换便可以使得 $\mathbf{PoA}$ 同时为两条链进行工作：}{node.north}{xshift=12cm,yshift=-2cm};
+  \end{tikzpicture}
+  \newline
+  \begin{tikzpicture}
+    \path node[catebg] {
+    \begin{tikzcd}[catethe]
+      Node && C_1 \\
+      & C_2 && PoA
+    \end{tikzcd}};
+  \end{tikzpicture}
+  \qquad\qquad\qquad
+  \begin{tikzpicture}
+    \path[group,node,level 1/.append style={sibling angle=120},rotate=90]
+    node[root] {$Node$}
+    child[chain] {node (c1) {$C_2$}}
+    child[chain] {node (c2) {$C_1$} child[cons] {
+    node {$PoS$}
+    node[xshift=6.5cm] (poa) {$PoA$}}};
+    \path (poa) to[circle connection bar switch color = from (purple) to (darkgray)] (c1);
+    \path (poa) to[circle connection bar switch color = from (purple) to (darkgray)] (c2);
   \end{tikzpicture}
 
 \end{document}
