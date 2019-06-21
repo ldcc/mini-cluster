@@ -161,9 +161,9 @@ matrix scale/.style={/tikz/matrix xscale={#1},/tikz/matrix yscale={#1}}}
   \newline
   \begin{tikzpicture}
     \path node[catebg] {
-    \begin{tikzcd}[catethe]
-      Node && C_1 \\
-      & C_2 && PoA
+    \begin{tikzcd}[catethe,matrix scale=1.4]
+      Node \ar[rr, teal, "f"] \ar[rd, teal, "f \prime"]  \ar[rrrd, teal!50!purple, "g \circ f \equiv g \prime \circ f \prime"] && C_1 \ar[rd, orange, "g"] \\
+      & C_2 \ar[rr, orange, "g \prime"] && PoA
     \end{tikzcd}};
   \end{tikzpicture}
   \qquad\qquad\qquad
