@@ -14,30 +14,40 @@ import (
 //type constraints []*Constraint
 type constraints map[utils.Name]*Constraint
 type constraintI interface {
-	process(utils.Name)
-	forget(utils.Name)
+	propogate(*Connector, *utils.Cv)
+	process(*Connector)
+	forget(*Connector)
 }
-type process func(utils.Name)
-type forget func(utils.Name)
+type process func(*Connector)
+type forget func(*Connector)
 type connect func(*Connector) // Implicit `Function Side Effect`
 type Constraint struct {
-	Name       utils.Name
-	connectors connectors
-	Process    process
-	Forget     forget
-	Connect    connect
+	Name utils.Name
+	Process process
+	Forget  forget
+	Connect connect
 }
 
 func makeConstraint(name utils.Name, ci constraintI, conns ...*Connector) *Constraint {
 	connectors := make(connectors)
-	self := &Constraint{name, connectors, ci.process,
-		func(name utils.Name) {
+	self := &Constraint{
+		name,
+		func(sender *Connector) {
+			value := sender.value // Copy new value
 			for cname, conn := range connectors {
-				if cname != name {
+				if cname != sender.name {
+					ci.propogate(conn, &value)
+				}
+			}
+			ci.process(sender)
+		},
+		func(sender *Connector) {
+			for cname, conn := range connectors {
+				if cname != sender.name {
 					conn.Forget(name)
 				}
 			}
-			ci.forget(name)
+			ci.forget(sender)
 		},
 		func(conn *Connector) {
 			connectors[conn.name] = conn
@@ -66,17 +76,19 @@ func MakeProbe(name utils.Name, conns ...*Connector) *Constraint {
 	return self.constr
 }
 
-func (self Probe) process(name utils.Name) {
-	self.print(self.constr.connectors[name])
+func (self Probe) propogate(*Connector, *utils.Cv) {
 }
 
-func (self Probe) forget(name utils.Name) {
-	self.print("?")
+func (self Probe) process(sender *Connector) {
+	self.print(sender.name, sender.GetVal())
 }
 
-func (self Probe) print(value interface{}) {
-	conn := value.(*Connector)
-	fmt.Printf("Probe: %s stores: %v", conn.name, conn.GetVal())
+func (self Probe) forget(sender *Connector) {
+	self.print(sender.name, "?")
+}
+
+func (self Probe) print(name utils.Name, value interface{}) {
+	fmt.Printf("Probe: %s stores: %v\n", name, value)
 }
 
 //###################################################################################
@@ -94,19 +106,17 @@ func MakeNode(node *p2pnet.Node, conns ...*Connector) *Constraint {
 	return self.constr
 }
 
-func (self Node) process(name utils.Name) {
-	sender := self.constr.connectors[name]
-	for cname, conn := range self.constr.connectors {
-		if cname != name {
-			conn.AddVal(sender.value)
-		}
-	}
+func (self Node) propogate(conn *Connector, value *utils.Cv) {
+	//tx := value.(*utils.Tx)
+	conn.AddVal(*value, self.constr.Name)
+}
+
+func (self Node) process(sender *Connector) {
 	// TODO do some proccess
 
 }
 
-func (self Node) forget(name utils.Name) {
-
+func (self Node) forget(sender *Connector) {
 }
 
 //###################################################################################
@@ -124,13 +134,15 @@ func MakeBlcokchain(chain *utils.Chain, conns ...*Connector) *Constraint {
 	return self.constr
 }
 
-func (self Blockchain) process(name utils.Name) {
+func (self Blockchain) propogate(*Connector, *utils.Cv) {
+}
+
+func (self Blockchain) process(sender *Connector) {
 	// TODO do some upgrades
 
 }
 
-func (self Blockchain) forget(name utils.Name) {
-
+func (self Blockchain) forget(sender *Connector) {
 }
 
 //###################################################################################
@@ -148,11 +160,13 @@ func MakeConsensus(engine *consensus.Engine, conns ...*Connector) *Constraint {
 	return self.constr
 }
 
-func (self Consensus) process(name utils.Name) {
+func (self Consensus) propogate(*Connector, *utils.Cv) {
+}
+
+func (self Consensus) process(sender *Connector) {
 	// TODO do some consensus
 
 }
 
-func (self Consensus) forget(name utils.Name) {
-
+func (self Consensus) forget(sender *Connector) {
 }

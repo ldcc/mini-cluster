@@ -5,6 +5,11 @@ import "fmt"
 type Name Hash
 type Hash string // [32]byte
 
+/// Constraint Value
+type Cv struct {
+	Value interface{}
+}
+
 type Tx struct {
 	Hash Hash
 }
@@ -21,8 +26,8 @@ func (self TxSet) HasTx() bool {
 	return len(self) > 0
 }
 
-func (self TxSet) AddTx(tx Tx) {
-	self[tx.Hash] = &tx
+func (self TxSet) AddTx(tx *Tx) {
+	self[tx.Hash] = tx
 }
 
 func (self TxSet) Copy() TxSet {
@@ -43,24 +48,24 @@ func (self TxSet) String() string {
 	return format + "\n}"
 }
 
-type TxList []*Tx
+type CvList []*Cv
 
-func (self *TxList) Clean() {
+func (self *CvList) Clean() {
 	tmplst := *self
 	*self = tmplst[:0]
 }
 
-func (self *TxList) HasTx() bool {
+func (self *CvList) HasCv() bool {
 	return len(*self) > 0
 }
 
-func (self *TxList) AddTx(tx Tx) {
-	*self = append(*self, &tx)
+func (self *CvList) AddCv(cv *Cv) {
+	*self = append(*self, cv)
 }
 
-func (self *TxList) Copy() TxList {
-	var txList = make(TxList, len(*self))
-	if self.HasTx() {
+func (self *CvList) Copy() CvList {
+	var txList = make(CvList, len(*self))
+	if self.HasCv() {
 		for _, e := range *self {
 			txList = append(txList, e)
 		}
@@ -68,8 +73,8 @@ func (self *TxList) Copy() TxList {
 	return txList
 }
 
-func (self TxList) String() string {
-	var format = "TxList: {"
+func (self CvList) String() string {
+	var format = "CvList: {"
 	for k, v := range self {
 		format = fmt.Sprintf(format+"\n\t%No.n: %v,", k, *v)
 	}

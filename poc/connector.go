@@ -6,11 +6,16 @@ import (
 
 //type connectors []*Connector
 type connectors map[utils.Name]*Connector
+
+//type Connector struct {
+//	Name    utils.Name
+//	constrs constraints
+//}
 type Connector struct {
 	constrs constraints
 	stores  utils.TxSet
-	value   utils.Tx
-	pline   chan *utils.Tx
+	value   utils.Cv
+	pline   chan *utils.Cv
 	name    utils.Name
 }
 
@@ -18,14 +23,14 @@ func MakeConnector(name utils.Name) *Connector {
 	return &Connector{
 		constrs: make(constraints),
 		stores:  make(utils.TxSet),
-		pline:   make(chan *utils.Tx),
+		pline:   make(chan *utils.Cv),
 		name:    name,
 	}
 }
 
-func (self Connector) Connect(constr *Constraint) {
+func (self *Connector) Connect(constr *Constraint) {
 	self.constrs[constr.Name] = constr
-	constr.Connect(&self)
+	constr.Connect(self)
 }
 
 //func (self Connector) Disconnect(constr *Constraint) {
@@ -33,38 +38,41 @@ func (self Connector) Connect(constr *Constraint) {
 //	constr.Disconnect(&self)
 //}
 
-func (self Connector) HasVal() bool {
+func (self *Connector) HasVal() bool {
 	return self.stores.HasTx()
 }
 
-func (self Connector) GetVal() utils.TxSet {
+func (self *Connector) GetVal() utils.TxSet {
 	return self.stores.Copy()
 }
 
 // TODO add mutex lock
-func (self Connector) AddVal(tx utils.Tx) {
-	self.stores.AddTx(tx)
+func (self *Connector) AddVal(value utils.Cv, adder utils.Name) {
+	tx := value.Value.(utils.Tx)
+	self.stores.AddTx(&tx)
 	//self.pline <- &tx
-	self.value = tx
-	for _, constr := range self.constrs {
-		constr.Process(self.name)
+	self.value = value
+	for cname, constr := range self.constrs {
+		if cname != adder {
+			constr.Process(self)
+		}
 	}
 }
 
 //// TODO add mutex lock
-func (self Connector) ClsVal() {
+func (self *Connector) ClsVal() {
 	if self.HasVal() {
 		self.stores.Clean()
 	}
 }
 
 // TODO add mutex lock
-func (self Connector) Forget(name utils.Name) {
+func (self *Connector) Forget(name utils.Name) {
 	for cname, constr := range self.constrs {
 		if cname != name {
 			func() {
-				constr.Forget(self.name)
-				constr.Process(self.name)
+				constr.Forget(self)
+				constr.Process(self)
 			}()
 		}
 	}
