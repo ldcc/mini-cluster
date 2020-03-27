@@ -17,3 +17,5 @@ pdf: clean $(PDFS)
 
 clean:
 	rm -f ./pdfs/*
+
+.PHONY: *.cls clean

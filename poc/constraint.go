@@ -1,9 +1,10 @@
 package poc
 
 import (
-	"../consensus"
-	"../p2pnet"
-	"../utils"
+	"github.com/ldcc/mini-cluster/consensus"
+	"github.com/ldcc/mini-cluster/p2pnet"
+	"github.com/ldcc/mini-cluster/utils"
+
 	"fmt"
 )
 
@@ -76,18 +77,18 @@ func MakeProbe(name utils.Name, conns ...*Connector) *Constraint {
 	return self.constr
 }
 
-func (self Probe) propogate(*Connector, *utils.Cv) {
+func (probe Probe) propogate(*Connector, *utils.Cv) {
 }
 
-func (self Probe) process(sender *Connector) {
-	self.print(sender.name, sender.GetVal())
+func (probe Probe) process(sender *Connector) {
+	probe.print(sender.name, sender.GetVal())
 }
 
-func (self Probe) forget(sender *Connector) {
-	self.print(sender.name, "?")
+func (probe Probe) forget(sender *Connector) {
+	probe.print(sender.name, "?")
 }
 
-func (self Probe) print(name utils.Name, value interface{}) {
+func (probe Probe) print(name utils.Name, value interface{}) {
 	fmt.Printf("Probe: %s stores: %v\n", name, value)
 }
 
@@ -106,17 +107,17 @@ func MakeNode(node *p2pnet.Node, conns ...*Connector) *Constraint {
 	return self.constr
 }
 
-func (self Node) propogate(conn *Connector, value *utils.Cv) {
+func (node Node) propogate(conn *Connector, value *utils.Cv) {
 	//tx := value.(*utils.Tx)
-	conn.AddVal(*value, self.constr.Name)
+	conn.AddVal(*value, node.constr.Name)
 }
 
-func (self Node) process(sender *Connector) {
+func (node Node) process(sender *Connector) {
 	// TODO do some proccess
 
 }
 
-func (self Node) forget(sender *Connector) {
+func (node Node) forget(sender *Connector) {
 }
 
 //###################################################################################
@@ -134,15 +135,15 @@ func MakeBlcokchain(chain *utils.Chain, conns ...*Connector) *Constraint {
 	return self.constr
 }
 
-func (self Blockchain) propogate(*Connector, *utils.Cv) {
+func (chain Blockchain) propogate(*Connector, *utils.Cv) {
 }
 
-func (self Blockchain) process(sender *Connector) {
+func (chain Blockchain) process(sender *Connector) {
 	// TODO do some upgrades
 
 }
 
-func (self Blockchain) forget(sender *Connector) {
+func (chain Blockchain) forget(sender *Connector) {
 }
 
 //###################################################################################
@@ -160,13 +161,13 @@ func MakeConsensus(engine *consensus.Engine, conns ...*Connector) *Constraint {
 	return self.constr
 }
 
-func (self Consensus) propogate(*Connector, *utils.Cv) {
+func (cons Consensus) propogate(*Connector, *utils.Cv) {
 }
 
-func (self Consensus) process(sender *Connector) {
+func (cons Consensus) process(sender *Connector) {
 	// TODO do some consensus
 
 }
 
-func (self Consensus) forget(sender *Connector) {
+func (cons Consensus) forget(sender *Connector) {
 }

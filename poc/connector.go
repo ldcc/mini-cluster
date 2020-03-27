@@ -1,16 +1,12 @@
 package poc
 
 import (
-	"../utils"
+	"github.com/ldcc/mini-cluster/utils"
 )
 
 //type connectors []*Connector
 type connectors map[utils.Name]*Connector
 
-//type Connector struct {
-//	Name    utils.Name
-//	constrs constraints
-//}
 type Connector struct {
 	constrs constraints
 	stores  utils.TxSet
@@ -28,51 +24,51 @@ func MakeConnector(name utils.Name) *Connector {
 	}
 }
 
-func (self *Connector) Connect(constr *Constraint) {
-	self.constrs[constr.Name] = constr
-	constr.Connect(self)
+func (conn *Connector) Connect(constr *Constraint) {
+	conn.constrs[constr.Name] = constr
+	constr.Connect(conn)
 }
 
-//func (self Connector) Disconnect(constr *Constraint) {
+//func (self *Connector) Disconnect(constr *Constraint) {
 //	delete(self.constrs, constr.name)
 //	constr.Disconnect(&self)
 //}
 
-func (self *Connector) HasVal() bool {
-	return self.stores.HasTx()
+func (conn *Connector) HasVal() bool {
+	return conn.stores.HasTx()
 }
 
-func (self *Connector) GetVal() utils.TxSet {
-	return self.stores.Copy()
+func (conn *Connector) GetVal() utils.TxSet {
+	return conn.stores.Copy()
 }
 
 // TODO add mutex lock
-func (self *Connector) AddVal(value utils.Cv, adder utils.Name) {
+func (conn *Connector) AddVal(value utils.Cv, adder utils.Name) {
 	tx := value.Value.(utils.Tx)
-	self.stores.AddTx(&tx)
-	//self.pline <- &tx
-	self.value = value
-	for cname, constr := range self.constrs {
+	conn.stores.AddTx(&tx)
+	//conn.pline <- &tx
+	conn.value = value
+	for cname, constr := range conn.constrs {
 		if cname != adder {
-			constr.Process(self)
+			constr.Process(conn)
 		}
 	}
 }
 
 //// TODO add mutex lock
-func (self *Connector) ClsVal() {
-	if self.HasVal() {
-		self.stores.Clean()
+func (conn *Connector) ClsVal() {
+	if conn.HasVal() {
+		conn.stores.Clean()
 	}
 }
 
 // TODO add mutex lock
-func (self *Connector) Forget(name utils.Name) {
-	for cname, constr := range self.constrs {
+func (conn *Connector) Forget(name utils.Name) {
+	for cname, constr := range conn.constrs {
 		if cname != name {
 			func() {
-				constr.Forget(self)
-				constr.Process(self)
+				constr.Forget(conn)
+				constr.Process(conn)
 			}()
 		}
 	}

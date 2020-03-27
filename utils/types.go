@@ -16,33 +16,33 @@ type Tx struct {
 
 type TxSet map[Hash]*Tx
 
-func (self TxSet) Clean() {
-	for k := range self {
-		delete(self, k)
+func (set TxSet) Clean() {
+	for k := range set {
+		delete(set, k)
 	}
 }
 
-func (self TxSet) HasTx() bool {
-	return len(self) > 0
+func (set TxSet) HasTx() bool {
+	return len(set) > 0
 }
 
-func (self TxSet) AddTx(tx *Tx) {
-	self[tx.Hash] = tx
+func (set TxSet) AddTx(tx *Tx) {
+	set[tx.Hash] = tx
 }
 
-func (self TxSet) Copy() TxSet {
+func (set TxSet) Copy() TxSet {
 	var txSet = make(TxSet)
-	if self.HasTx() {
-		for k, v := range self {
+	if set.HasTx() {
+		for k, v := range set {
 			txSet[k] = v
 		}
 	}
 	return txSet
 }
 
-func (self TxSet) String() string {
+func (set TxSet) String() string {
 	var format = "TxSet: {"
-	for k, v := range self {
+	for k, v := range set {
 		format = fmt.Sprintf(format+"\n\t%v: %v,", k, *v)
 	}
 	return format + "\n}"
@@ -50,32 +50,32 @@ func (self TxSet) String() string {
 
 type CvList []*Cv
 
-func (self *CvList) Clean() {
-	tmplst := *self
-	*self = tmplst[:0]
+func (cvl *CvList) Clean() {
+	tmplst := *cvl
+	*cvl = tmplst[:0]
 }
 
-func (self *CvList) HasCv() bool {
-	return len(*self) > 0
+func (cvl *CvList) HasCv() bool {
+	return len(*cvl) > 0
 }
 
-func (self *CvList) AddCv(cv *Cv) {
-	*self = append(*self, cv)
+func (cvl *CvList) AddCv(cv *Cv) {
+	*cvl = append(*cvl, cv)
 }
 
-func (self *CvList) Copy() CvList {
-	var txList = make(CvList, len(*self))
-	if self.HasCv() {
-		for _, e := range *self {
+func (cvl *CvList) Copy() CvList {
+	var txList = make(CvList, len(*cvl))
+	if cvl.HasCv() {
+		for _, e := range *cvl {
 			txList = append(txList, e)
 		}
 	}
 	return txList
 }
 
-func (self CvList) String() string {
+func (cvl CvList) String() string {
 	var format = "CvList: {"
-	for k, v := range self {
+	for k, v := range cvl {
 		format = fmt.Sprintf(format+"\n\t%No.n: %v,", k, *v)
 	}
 	return format + "\n}"

@@ -1,7 +1,7 @@
 package consensus
 
 import (
-	"../utils"
+	"github.com/ldcc/mini-cluster/utils"
 )
 
 //###################################################################################

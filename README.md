@@ -1,2 +1,3 @@
-# poc-chain
-A blockchain protocol implementation of `Propagation of Constraints`
+# mini-cluster
+
+A mini distributiion group cluster protocol, implementation by using `Propagation of Constraints`.

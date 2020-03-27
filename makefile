@@ -5,3 +5,5 @@ main: clean main.go
 	go build -o bin/$@
 clean:
 	rm -f bin/*
+
+.PHONY: clean
