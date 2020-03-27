@@ -4,6 +4,9 @@ import (
 	"github.com/ldcc/mini-cluster/utils"
 )
 
+// TODO 设计一个接口使得它同时满足 local-dispatch 和 RPC-Cluster
+// TODO 实现 RPC 环境的 dispatch: RPC-Cluster
+
 type constraints map[utils.Name]*Constraint
 
 type Dispatch struct {

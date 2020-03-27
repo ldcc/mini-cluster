@@ -8,52 +8,46 @@ import (
 	"fmt"
 )
 
+type (
+	process    func(*Dispatch)
+	commit     func(*Dispatch)
+	connect    func(*Dispatch)
+	disconnect func(*Dispatch)
+	// TODO 在单机环境下一个 Dispatch 与一个 RPC-Cluster 同余
+	//      在分布式环境下 dispatchs 需要改成 connection-cluster-pool
+	dispatchs map[utils.Name]*Dispatch
+)
+
 //###################################################################################
 // Constraint-Box Typeclass
 //###################################################################################
 
-type constraintI interface {
+type Application interface {
 	propogate(*Dispatch, *utils.Cv)
 	process(*Dispatch)
 	commit(*Dispatch)
 }
 
-type send func(utils.Cv)
-type process func(*Dispatch)
-type commit func(*Dispatch)
-type connect func(*Dispatch)
-type disconnect func(*Dispatch)
-
-/**
- * TODO 在单机环境下一个 dispatch 与一个 tcp-connection 同余
- *      在分布式环境下 dispatchs 需要改成 connections
- */
-type dispatchs map[utils.Name]*Dispatch
-
 type Constraint struct {
 	Name       utils.Name
-	Send       send
 	Process    process
 	Commit     commit
 	Connect    connect
 	Disconnect disconnect
 }
 
-func makeConstraint(cname utils.Name, ci constraintI, disps ...*Dispatch) *Constraint {
+func makeConstraint(cname utils.Name, app Application, disps ...*Dispatch) *Constraint {
 	dispatchs := make(dispatchs)
-	self := &Constraint{
+	constr := &Constraint{
 		Name: cname,
-		Send: func(msg utils.Cv) {
-
-		},
 		Process: func(sender *Dispatch) {
 			msg := sender.message
 			for name, disp := range dispatchs {
 				if name != sender.name {
-					ci.propogate(disp, &msg)
+					app.propogate(disp, &msg)
 				}
 			}
-			ci.process(sender)
+			app.process(sender)
 		},
 		Commit: func(sender *Dispatch) {
 			for name, disp := range dispatchs {
@@ -61,7 +55,7 @@ func makeConstraint(cname utils.Name, ci constraintI, disps ...*Dispatch) *Const
 					disp.Commit(cname)
 				}
 			}
-			ci.commit(sender)
+			app.commit(sender)
 		},
 		Connect: func(disp *Dispatch) {
 			if _, ok := dispatchs[disp.name]; !ok {
@@ -77,10 +71,10 @@ func makeConstraint(cname utils.Name, ci constraintI, disps ...*Dispatch) *Const
 	for _, disp := range disps {
 		if disp != nil {
 			dispatchs[disp.name] = disp
-			disp.Connect(self)
+			disp.Connect(constr)
 		}
 	}
-	return self
+	return constr
 }
 
 //###################################################################################

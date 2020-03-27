@@ -8,8 +8,10 @@ import (
 // Constraint Value
 //###################################################################################
 
-type Name Hash
-type Hash string // TODO [32]byte
+type (
+	Name Hash
+	Hash string // TODO [32]byte
+)
 
 //###################################################################################
 // Transaction
