@@ -4,71 +4,73 @@ import (
 	"github.com/ldcc/mini-cluster/utils"
 )
 
-//type connectors []*Connector
-type connectors map[utils.Name]*Connector
+type constraints map[utils.Name]*Constraint
 
-type Connector struct {
-	constrs constraints
-	stores  utils.TxSet
-	value   utils.Cv
-	pline   chan *utils.Cv
+type Dispatch struct {
 	name    utils.Name
+	stores  utils.CvSet
+	message utils.Cv
+	pline   chan *utils.Cv
+	constrs constraints
 }
 
-func MakeConnector(name utils.Name) *Connector {
-	return &Connector{
-		constrs: make(constraints),
-		stores:  make(utils.TxSet),
-		pline:   make(chan *utils.Cv),
+func MakeConnector(name utils.Name) *Dispatch {
+	return &Dispatch{
 		name:    name,
+		stores:  make(utils.CvSet),
+		pline:   make(chan *utils.Cv),
+		constrs: make(constraints),
 	}
 }
 
-func (conn *Connector) Connect(constr *Constraint) {
-	conn.constrs[constr.Name] = constr
-	constr.Connect(conn)
+func (dispatch *Dispatch) Connect(constr *Constraint) {
+	if _, ok := dispatch.constrs[constr.Name]; !ok {
+		dispatch.constrs[constr.Name] = constr
+		constr.Connect(dispatch)
+	}
 }
 
-//func (self *Connector) Disconnect(constr *Constraint) {
-//	delete(self.constrs, constr.name)
-//	constr.Disconnect(&self)
-//}
-
-func (conn *Connector) HasVal() bool {
-	return conn.stores.HasTx()
+func (dispatch *Dispatch) Disconnect(constr *Constraint) {
+	if _, ok := dispatch.constrs[constr.Name]; !ok {
+		delete(dispatch.constrs, constr.Name)
+		constr.Disconnect(dispatch)
+	}
 }
 
-func (conn *Connector) GetVal() utils.TxSet {
-	return conn.stores.Copy()
+func (dispatch *Dispatch) IsEmpty() bool {
+	return dispatch.stores.HasCv()
+}
+
+func (dispatch *Dispatch) GetMessage() utils.Cv {
+	return dispatch.message
 }
 
 // TODO add mutex lock
-func (conn *Connector) AddVal(value utils.Cv, adder utils.Name) {
-	tx := value.Value.(utils.Tx)
-	conn.stores.AddTx(&tx)
-	//conn.pline <- &tx
-	conn.value = value
-	for cname, constr := range conn.constrs {
+func (dispatch *Dispatch) SendMessage(cv *utils.Cv, adder utils.Name) {
+	dispatch.stores.AddCv(cv)
+	//dispatch.pline <- cv
+	dispatch.message = *cv
+	for cname, constr := range dispatch.constrs {
 		if cname != adder {
-			constr.Process(conn)
+			constr.Process(dispatch)
 		}
 	}
 }
 
-//// TODO add mutex lock
-func (conn *Connector) ClsVal() {
-	if conn.HasVal() {
-		conn.stores.Clean()
+// TODO add mutex lock
+func (dispatch *Dispatch) CleanStores() {
+	if dispatch.IsEmpty() {
+		dispatch.stores.Clean()
 	}
 }
 
 // TODO add mutex lock
-func (conn *Connector) Forget(name utils.Name) {
-	for cname, constr := range conn.constrs {
+func (dispatch *Dispatch) Commit(name utils.Name) {
+	for cname, constr := range dispatch.constrs {
 		if cname != name {
 			func() {
-				constr.Forget(conn)
-				constr.Process(conn)
+				constr.Commit(dispatch)
+				constr.Process(dispatch)
 			}()
 		}
 	}

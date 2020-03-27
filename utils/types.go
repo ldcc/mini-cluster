@@ -1,85 +1,79 @@
 package utils
 
-import "fmt"
+import (
+	"fmt"
+)
+
+//###################################################################################
+// Constraint Value
+//###################################################################################
 
 type Name Hash
-type Hash string // [32]byte
+type Hash string // TODO [32]byte
 
-/// Constraint Value
+//###################################################################################
+// Transaction
+//###################################################################################
+
+type Tx struct {
+	from Hash
+	to   Hash
+}
+
+//###################################################################################
+// Constraint Message Value
+//###################################################################################
+
 type Cv struct {
+	Hash  Hash
 	Value interface{}
 }
 
-type Tx struct {
-	Hash Hash
+func (cv Cv) String() string {
+	return fmt.Sprintf("%s: %v", cv.Hash, cv.Value)
 }
 
-type TxSet map[Hash]*Tx
+type CvSet map[Hash]*Cv
 
-func (set TxSet) Clean() {
+func (set CvSet) Clean() {
 	for k := range set {
 		delete(set, k)
 	}
 }
 
-func (set TxSet) HasTx() bool {
+func (set CvSet) HasCv() bool {
 	return len(set) > 0
 }
 
-func (set TxSet) AddTx(tx *Tx) {
-	set[tx.Hash] = tx
+func (set CvSet) AddCv(cv *Cv) {
+	var _cv = *cv
+	set[cv.Hash] = &_cv
 }
 
-func (set TxSet) Copy() TxSet {
-	var txSet = make(TxSet)
-	if set.HasTx() {
+func (set CvSet) Copy() CvSet {
+	var _set = make(CvSet, len(set))
+	if set.HasCv() {
 		for k, v := range set {
-			txSet[k] = v
+			_set[k] = v
 		}
 	}
-	return txSet
+	return _set
 }
 
-func (set TxSet) String() string {
-	var format = "TxSet: {"
-	for k, v := range set {
-		format = fmt.Sprintf(format+"\n\t%v: %v,", k, *v)
+func (set CvSet) String() string {
+	var format = "CvSet: {"
+	for _, _v := range set {
+		v := _v.String()
+		format = fmt.Sprintf(format+"\n\t%v", v)
 	}
 	return format + "\n}"
 }
 
-type CvList []*Cv
+//###################################################################################
+// Blockchain
+//###################################################################################
 
-func (cvl *CvList) Clean() {
-	tmplst := *cvl
-	*cvl = tmplst[:0]
-}
-
-func (cvl *CvList) HasCv() bool {
-	return len(*cvl) > 0
-}
-
-func (cvl *CvList) AddCv(cv *Cv) {
-	*cvl = append(*cvl, cv)
-}
-
-func (cvl *CvList) Copy() CvList {
-	var txList = make(CvList, len(*cvl))
-	if cvl.HasCv() {
-		for _, e := range *cvl {
-			txList = append(txList, e)
-		}
-	}
-	return txList
-}
-
-func (cvl CvList) String() string {
-	var format = "CvList: {"
-	for k, v := range cvl {
-		format = fmt.Sprintf(format+"\n\t%No.n: %v,", k, *v)
-	}
-	return format + "\n}"
-}
+type TxSet CvSet
 
 type Block struct {
 	RootHash Hash

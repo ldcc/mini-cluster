@@ -3,15 +3,15 @@ package p2pnet
 import (
 	"net"
 
-	"github.com/ldcc/mini-cluster/utils"
+	utils "github.com/ldcc/mini-cluster/utils"
 )
 
-type Node struct {
+type Peer struct {
 	Name utils.Name
 	Addr *net.TCPAddr
 }
 
-func MakeNode(id, addr string) *Node {
+func MakePeer(id, addr string) *Peer {
 	var tcpaddr, _ = net.ResolveTCPAddr("tcp", addr)
-	return &Node{utils.Name(id), tcpaddr}
+	return &Peer{Name: utils.Name(id), Addr: tcpaddr}
 }
