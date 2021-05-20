@@ -1,7 +1,7 @@
 package poc
 
 import (
-	"github.com/ldcc/mini-cluster/utils"
+	"mini-cluster/utils"
 )
 
 // TODO 设计一个接口使得它同时满足 local-dispatch 和 RPC-Cluster
@@ -9,7 +9,7 @@ import (
 
 type constraints map[utils.Name]*Constraint
 
-type Dispatch struct {
+type Dispatcher struct {
 	name    utils.Name
 	stores  utils.CvSet
 	message utils.Cv
@@ -17,8 +17,8 @@ type Dispatch struct {
 	constrs constraints
 }
 
-func MakeConnector(name utils.Name) *Dispatch {
-	return &Dispatch{
+func MakeConnector(name utils.Name) *Dispatcher {
+	return &Dispatcher{
 		name:    name,
 		stores:  make(utils.CvSet),
 		pline:   make(chan *utils.Cv),
@@ -26,54 +26,54 @@ func MakeConnector(name utils.Name) *Dispatch {
 	}
 }
 
-func (dispatch *Dispatch) Connect(constr *Constraint) {
-	if _, ok := dispatch.constrs[constr.Name]; !ok {
-		dispatch.constrs[constr.Name] = constr
-		constr.Connect(dispatch)
+func (disp *Dispatcher) Connect(constr *Constraint) {
+	if _, ok := disp.constrs[constr.Name]; !ok {
+		disp.constrs[constr.Name] = constr
+		constr.Connect(disp)
 	}
 }
 
-func (dispatch *Dispatch) Disconnect(constr *Constraint) {
-	if _, ok := dispatch.constrs[constr.Name]; !ok {
-		delete(dispatch.constrs, constr.Name)
-		constr.Disconnect(dispatch)
+func (disp *Dispatcher) Disconnect(constr *Constraint) {
+	if _, ok := disp.constrs[constr.Name]; ok {
+		delete(disp.constrs, constr.Name)
+		constr.Disconnect(disp)
 	}
 }
 
-func (dispatch *Dispatch) IsEmpty() bool {
-	return dispatch.stores.HasCv()
+func (disp *Dispatcher) IsEmpty() bool {
+	return disp.stores.HasCv()
 }
 
-func (dispatch *Dispatch) GetMessage() utils.Cv {
-	return dispatch.message
+func (disp *Dispatcher) GetMessage() utils.Cv {
+	return disp.message
 }
 
 // TODO add mutex lock
-func (dispatch *Dispatch) SendMessage(cv *utils.Cv, adder utils.Name) {
-	dispatch.stores.AddCv(cv)
-	//dispatch.pline <- cv
-	dispatch.message = *cv
-	for cname, constr := range dispatch.constrs {
+func (disp *Dispatcher) SendMessage(cv *utils.Cv, adder utils.Name) {
+	disp.stores.AddCv(cv)
+	//disp.pline <- cv
+	disp.message = *cv
+	for cname, constr := range disp.constrs {
 		if cname != adder {
-			constr.Process(dispatch)
+			constr.Process(disp)
 		}
 	}
 }
 
 // TODO add mutex lock
-func (dispatch *Dispatch) CleanStores() {
-	if dispatch.IsEmpty() {
-		dispatch.stores.Clean()
+func (disp *Dispatcher) CleanStores() {
+	if disp.IsEmpty() {
+		disp.stores.Clean()
 	}
 }
 
 // TODO add mutex lock
-func (dispatch *Dispatch) Commit(name utils.Name) {
-	for cname, constr := range dispatch.constrs {
+func (disp *Dispatcher) Commit(name utils.Name) {
+	for cname, constr := range disp.constrs {
 		if cname != name {
 			func() {
-				constr.Commit(dispatch)
-				constr.Process(dispatch)
+				constr.Commit(disp)
+				constr.Process(disp)
 			}()
 		}
 	}

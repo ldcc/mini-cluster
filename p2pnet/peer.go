@@ -3,7 +3,7 @@ package p2pnet
 import (
 	"net"
 
-	utils "github.com/ldcc/mini-cluster/utils"
+	utils "mini-cluster/utils"
 )
 
 type Peer struct {

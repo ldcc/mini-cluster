@@ -1,8 +1,8 @@
 package pos
 
 import (
-	"github.com/ldcc/mini-cluster/consensus"
-	"github.com/ldcc/mini-cluster/utils"
+	"mini-cluster/consensus"
+	"mini-cluster/utils"
 )
 
 type PoS struct {
