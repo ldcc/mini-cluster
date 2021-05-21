@@ -43,21 +43,23 @@ func (set CvSet) Clean() {
 	}
 }
 
-func (set CvSet) HasCv() bool {
+func (set CvSet) Empty() bool {
 	return len(set) > 0
 }
 
-func (set CvSet) AddCv(cv *Cv) {
-	var _cv = *cv
-	set[cv.Hash] = &_cv
+func (set CvSet) Exist(cv Cv) bool {
+	_, exist := set[cv.Hash]
+	return exist
+}
+
+func (set CvSet) AddCv(cv Cv) {
+	set[cv.Hash] = &cv
 }
 
 func (set CvSet) Copy() CvSet {
 	var _set = make(CvSet, len(set))
-	if set.HasCv() {
-		for k, v := range set {
-			_set[k] = v
-		}
+	for k, v := range set {
+		_set[k] = v
 	}
 	return _set
 }

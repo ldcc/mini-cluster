@@ -7,71 +7,79 @@ import (
 	"mini-cluster/utils"
 )
 
-type (
-	process    func(*Dispatcher)
-	commit     func(*Dispatcher)
-	connect    func(*Dispatcher)
-	disconnect func(*Dispatcher)
-	// TODO 在单机环境下一个 Dispatcher 与一个 RPC-Cluster 同余
-	//      在分布式环境下 dispatchs 需要改成 connection-cluster-pool
-	dispatchs map[utils.Name]*Dispatcher
-)
+// TODO 在单机环境下一个 Dispatcher 与一个 RPC-Cluster 同余
+//      在分布式环境下 dispatchs 需要改成 connection-cluster-pool
+
+type dispatchs map[utils.Name]*Dispatcher
 
 type Application interface {
-	propagate(*Dispatcher, *utils.Cv)
-	process(*Dispatcher)
-	commit(*Dispatcher)
+	propagate(*Dispatcher, utils.Cv)
+	process(*Dispatcher, utils.Cv)
+	commit(*Dispatcher, utils.Cv)
 }
 
 //###################################################################################
 // Constraint-Box Typeclass
+// 一个约束器可能同时被多个调度器所捆绑
+// 一个调度器也可能同时关联了多个约束器
 //###################################################################################
 
 type Constraint struct {
-	Name       utils.Name
-	Process    process
-	Commit     commit
-	Connect    connect
-	Disconnect disconnect
+	Application
+	Name      utils.Name
+	validated utils.CvSet
+	stores    utils.CvSet
+	dispatchs dispatchs
 }
 
-// 一个约束器可能同时被多个调度器所捆绑
-// 一个调度器也可能同时关联了多个约束器
+func (constr *Constraint) Process(sender *Dispatcher, cv utils.Cv) {
+	if constr.stores.Exist(cv) {
+		return
+	}
+
+	for name, disp := range constr.dispatchs {
+		if name != sender.Name {
+			constr.propagate(disp, cv)
+		}
+	}
+	constr.process(sender, cv)
+}
+
+func (constr *Constraint) Commit(sender *Dispatcher, cv utils.Cv) {
+	if constr.stores.Exist(cv) {
+		return
+	}
+
+	for name, disp := range constr.dispatchs {
+		if name != sender.Name {
+			disp.Commit(constr.Name, cv)
+		}
+	}
+	constr.commit(sender, cv)
+}
+
+func (constr *Constraint) Connect(disp *Dispatcher) {
+	if _, ok := constr.dispatchs[disp.Name]; !ok {
+		constr.dispatchs[disp.Name] = disp
+	}
+}
+
+func (constr *Constraint) Disconnect(disp *Dispatcher) {
+	if _, ok := constr.dispatchs[disp.Name]; ok {
+		delete(constr.dispatchs, disp.Name)
+	}
+}
+
 func makeConstraint(cname utils.Name, app Application, disps ...*Dispatcher) *Constraint {
 	dispatchs := make(dispatchs)
 	constr := &Constraint{
-		Name: cname,
-		Process: func(sender *Dispatcher) {
-			msg := sender.message
-			for name, disp := range dispatchs {
-				if name != sender.name {
-					app.propagate(disp, &msg)
-				}
-			}
-			app.process(sender)
-		},
-		Commit: func(sender *Dispatcher) {
-			for name, disp := range dispatchs {
-				if name != sender.name {
-					disp.Commit(cname)
-				}
-			}
-			app.commit(sender)
-		},
-		Connect: func(disp *Dispatcher) {
-			if _, ok := dispatchs[disp.name]; !ok {
-				dispatchs[disp.name] = disp
-			}
-		},
-		Disconnect: func(disp *Dispatcher) {
-			if _, ok := dispatchs[disp.name]; ok {
-				delete(dispatchs, disp.name)
-			}
-		},
+		Name:        cname,
+		Application: app,
+		dispatchs:   dispatchs,
 	}
 	for _, disp := range disps {
 		if disp != nil {
-			dispatchs[disp.name] = disp
+			dispatchs[disp.Name] = disp
 			disp.Connect(constr)
 		}
 	}
@@ -92,15 +100,15 @@ func MakeProbe(name utils.Name, disps ...*Dispatcher) *Constraint {
 	return self.constr
 }
 
-func (probe Probe) propagate(*Dispatcher, *utils.Cv) {
+func (probe Probe) propagate(*Dispatcher, utils.Cv) {
 }
 
-func (probe Probe) process(sender *Dispatcher) {
-	probe.print(sender.name, sender.GetMessage())
+func (probe Probe) process(sender *Dispatcher, cv utils.Cv) {
+	probe.print(sender.Name, cv)
 }
 
-func (probe Probe) commit(sender *Dispatcher) {
-	probe.print(sender.name, "?")
+func (probe Probe) commit(sender *Dispatcher, cv utils.Cv) {
+	probe.print(sender.Name, "?")
 }
 
 func (probe Probe) print(name utils.Name, msg interface{}) {
@@ -122,16 +130,15 @@ func MakeNode(peer *p2pnet.Peer, disps ...*Dispatcher) *Constraint {
 	return self.constr
 }
 
-func (node Node) propagate(disp *Dispatcher, msg *utils.Cv) {
+func (node Node) propagate(disp *Dispatcher, msg utils.Cv) {
 	disp.SendMessage(msg, node.constr.Name)
 }
 
-func (node Node) process(sender *Dispatcher) {
+func (node Node) process(sender *Dispatcher, cv utils.Cv) {
 	// TODO do some proccess
-
 }
 
-func (node Node) commit(sender *Dispatcher) {
+func (node Node) commit(sender *Dispatcher, cv utils.Cv) {
 }
 
 //###################################################################################
@@ -149,15 +156,14 @@ func MakeBlcokchain(chain *utils.Chain, disps ...*Dispatcher) *Constraint {
 	return self.constr
 }
 
-func (chain Blockchain) propagate(*Dispatcher, *utils.Cv) {
+func (chain Blockchain) propagate(*Dispatcher, utils.Cv) {
 }
 
-func (chain Blockchain) process(sender *Dispatcher) {
+func (chain Blockchain) process(sender *Dispatcher, cv utils.Cv) {
 	// TODO do some upgrades
-
 }
 
-func (chain Blockchain) commit(sender *Dispatcher) {
+func (chain Blockchain) commit(sender *Dispatcher, cv utils.Cv) {
 }
 
 //###################################################################################
@@ -175,13 +181,12 @@ func MakeConsensus(engine *consensus.Engine, disps ...*Dispatcher) *Constraint {
 	return self.constr
 }
 
-func (cons Consensus) propagate(*Dispatcher, *utils.Cv) {
+func (cons Consensus) propagate(*Dispatcher, utils.Cv) {
 }
 
-func (cons Consensus) process(sender *Dispatcher) {
+func (cons Consensus) process(sender *Dispatcher, cv utils.Cv) {
 	// TODO do some consensus
-
 }
 
-func (cons Consensus) commit(sender *Dispatcher) {
+func (cons Consensus) commit(sender *Dispatcher, cv utils.Cv) {
 }

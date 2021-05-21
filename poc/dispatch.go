@@ -10,18 +10,16 @@ import (
 type constraints map[utils.Name]*Constraint
 
 type Dispatcher struct {
-	name    utils.Name
-	stores  utils.CvSet
-	message utils.Cv
-	pline   chan *utils.Cv
-	constrs constraints
+	Name      utils.Name
+	stores    utils.CvSet
+	validated utils.CvSet
+	constrs   constraints
 }
 
 func MakeConnector(name utils.Name) *Dispatcher {
 	return &Dispatcher{
-		name:    name,
+		Name:    name,
 		stores:  make(utils.CvSet),
-		pline:   make(chan *utils.Cv),
 		constrs: make(constraints),
 	}
 }
@@ -40,40 +38,38 @@ func (disp *Dispatcher) Disconnect(constr *Constraint) {
 	}
 }
 
-func (disp *Dispatcher) IsEmpty() bool {
-	return disp.stores.HasCv()
-}
-
-func (disp *Dispatcher) GetMessage() utils.Cv {
-	return disp.message
+func (disp *Dispatcher) Empty() bool {
+	return disp.stores.Empty()
 }
 
 // TODO add mutex lock
-func (disp *Dispatcher) SendMessage(cv *utils.Cv, adder utils.Name) {
+func (disp *Dispatcher) SendMessage(cv utils.Cv, sender utils.Name) {
+	if disp.stores.Exist(cv) {
+		return
+	}
+
 	disp.stores.AddCv(cv)
-	//disp.pline <- cv
-	disp.message = *cv
 	for cname, constr := range disp.constrs {
-		if cname != adder {
-			constr.Process(disp)
+		if cname != sender {
+			constr.Process(disp, cv)
 		}
 	}
 }
 
 // TODO add mutex lock
 func (disp *Dispatcher) CleanStores() {
-	if disp.IsEmpty() {
+	if !disp.Empty() {
 		disp.stores.Clean()
 	}
 }
 
 // TODO add mutex lock
-func (disp *Dispatcher) Commit(name utils.Name) {
+func (disp *Dispatcher) Commit(name utils.Name, cv utils.Cv) {
 	for cname, constr := range disp.constrs {
 		if cname != name {
 			func() {
-				constr.Commit(disp)
-				constr.Process(disp)
+				constr.Commit(disp, cv)
+				constr.Process(disp, cv)
 			}()
 		}
 	}
