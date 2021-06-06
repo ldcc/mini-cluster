@@ -32,6 +32,24 @@ type Constraint struct {
 	dispatchs dispatchs
 }
 
+func makeConstraint(cname utils.Name, app Application, disps ...*Dispatcher) *Constraint {
+	dispatchs := make(dispatchs)
+	constr := &Constraint{
+		Application: app,
+		Name:        cname,
+		validated:   make(utils.CvSet),
+		stores:      make(utils.CvSet),
+		dispatchs:   dispatchs,
+	}
+	for _, disp := range disps {
+		if disp != nil {
+			dispatchs[disp.Name] = disp
+			disp.Connect(constr)
+		}
+	}
+	return constr
+}
+
 func (constr *Constraint) Propagate(sender utils.Name, cv utils.Cv) {
 	if constr.stores.Exist(cv) {
 		return
@@ -74,24 +92,6 @@ func (constr *Constraint) Disconnect(disp *Dispatcher) {
 	if _, ok := constr.dispatchs[disp.Name]; ok {
 		delete(constr.dispatchs, disp.Name)
 	}
-}
-
-func makeConstraint(cname utils.Name, app Application, disps ...*Dispatcher) *Constraint {
-	dispatchs := make(dispatchs)
-	constr := &Constraint{
-		Application: app,
-		Name:        cname,
-		validated:   make(utils.CvSet),
-		stores:      make(utils.CvSet),
-		dispatchs:   dispatchs,
-	}
-	for _, disp := range disps {
-		if disp != nil {
-			dispatchs[disp.Name] = disp
-			disp.Connect(constr)
-		}
-	}
-	return constr
 }
 
 //###################################################################################

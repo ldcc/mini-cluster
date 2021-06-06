@@ -25,6 +25,32 @@ func MakeDispatcher(name utils.Name) *Dispatcher {
 	}
 }
 
+func (disp *Dispatcher) Propagate(sender utils.Name, cv utils.Cv) {
+	if disp.stores.Exist(cv) {
+		return
+	}
+
+	disp.stores.AddCv(cv)
+	for cname, constr := range disp.constrs {
+		if cname != sender {
+			func() {
+				constr.Propagate(disp.Name, cv)
+			}()
+		}
+	}
+}
+
+// TODO add mutex lock
+func (disp *Dispatcher) Commit(sender utils.Name, set utils.CvSet) {
+	for cname, constr := range disp.constrs {
+		if cname != sender {
+			func() {
+				constr.Commit(disp.Name, set)
+			}()
+		}
+	}
+}
+
 func (disp *Dispatcher) Connect(constr *Constraint) {
 	if _, ok := disp.constrs[constr.Name]; !ok {
 		disp.constrs[constr.Name] = constr
@@ -43,35 +69,9 @@ func (disp *Dispatcher) Empty() bool {
 	return disp.stores.Empty()
 }
 
-func (disp *Dispatcher) Propagate(sender utils.Name, cv utils.Cv) {
-	if disp.stores.Exist(cv) {
-		return
-	}
-
-	disp.stores.AddCv(cv)
-	for cname, constr := range disp.constrs {
-		if cname != sender {
-			func() {
-				constr.Propagate(disp.Name, cv)
-			}()
-		}
-	}
-}
-
 // TODO add mutex lock
 func (disp *Dispatcher) CleanStores() {
 	if !disp.Empty() {
 		disp.stores.Clean()
-	}
-}
-
-// TODO add mutex lock
-func (disp *Dispatcher) Commit(sender utils.Name, set utils.CvSet) {
-	for cname, constr := range disp.constrs {
-		if cname != sender {
-			func() {
-				constr.Commit(disp.Name, set)
-			}()
-		}
 	}
 }
