@@ -13,9 +13,9 @@ import (
 type dispatchs map[utils.Name]*Dispatcher
 
 type Application interface {
-	propagate(*Dispatcher, utils.Cv)
-	process(*Dispatcher, utils.Cv)
-	commit(*Dispatcher, utils.Cv)
+	snapshoot()
+	process(utils.Name, utils.Cv)
+	commit(utils.Name, utils.CvSet)
 }
 
 //###################################################################################
@@ -27,35 +27,41 @@ type Application interface {
 type Constraint struct {
 	Application
 	Name      utils.Name
-	validated utils.CvSet
 	stores    utils.CvSet
+	validated utils.CvSet
 	dispatchs dispatchs
 }
 
-func (constr *Constraint) Process(sender *Dispatcher, cv utils.Cv) {
+func (constr *Constraint) Propagate(sender utils.Name, cv utils.Cv) {
 	if constr.stores.Exist(cv) {
 		return
 	}
 
-	for name, disp := range constr.dispatchs {
-		if name != sender.Name {
-			constr.propagate(disp, cv)
+	constr.stores.AddCv(cv)
+	constr.process(sender, cv)
+	for dname, disp := range constr.dispatchs {
+		if dname != sender {
+			func() {
+				disp.Propagate(constr.Name, cv)
+			}()
 		}
 	}
-	constr.process(sender, cv)
 }
 
-func (constr *Constraint) Commit(sender *Dispatcher, cv utils.Cv) {
-	if constr.stores.Exist(cv) {
+func (constr *Constraint) Commit(sender utils.Name, set utils.CvSet) {
+	if len(set) == 0 {
 		return
 	}
 
-	for name, disp := range constr.dispatchs {
-		if name != sender.Name {
-			disp.Commit(constr.Name, cv)
+	constr.commit(sender, set)
+	//constr.snapshoot()
+	for dname, disp := range constr.dispatchs {
+		if dname != sender {
+			func() {
+				disp.Commit(constr.Name, set)
+			}()
 		}
 	}
-	constr.commit(sender, cv)
 }
 
 func (constr *Constraint) Connect(disp *Dispatcher) {
@@ -73,8 +79,10 @@ func (constr *Constraint) Disconnect(disp *Dispatcher) {
 func makeConstraint(cname utils.Name, app Application, disps ...*Dispatcher) *Constraint {
 	dispatchs := make(dispatchs)
 	constr := &Constraint{
-		Name:        cname,
 		Application: app,
+		Name:        cname,
+		validated:   make(utils.CvSet),
+		stores:      make(utils.CvSet),
 		dispatchs:   dispatchs,
 	}
 	for _, disp := range disps {
@@ -100,15 +108,16 @@ func MakeProbe(name utils.Name, disps ...*Dispatcher) *Constraint {
 	return self.constr
 }
 
-func (probe Probe) propagate(*Dispatcher, utils.Cv) {
+func (probe *Probe) snapshoot() {
+	panic("implement me")
 }
 
-func (probe Probe) process(sender *Dispatcher, cv utils.Cv) {
-	probe.print(sender.Name, cv)
+func (probe *Probe) process(sender utils.Name, cv utils.Cv) {
+	probe.print(sender, cv)
 }
 
-func (probe Probe) commit(sender *Dispatcher, cv utils.Cv) {
-	probe.print(sender.Name, "?")
+func (probe *Probe) commit(sender utils.Name, set utils.CvSet) {
+	probe.print(sender, set)
 }
 
 func (probe Probe) print(name utils.Name, msg interface{}) {
@@ -130,15 +139,22 @@ func MakeNode(peer *p2pnet.Peer, disps ...*Dispatcher) *Constraint {
 	return self.constr
 }
 
-func (node Node) propagate(disp *Dispatcher, msg utils.Cv) {
-	disp.SendMessage(msg, node.constr.Name)
+func (node *Node) snapshoot() {
+	panic("implement me")
 }
 
-func (node Node) process(sender *Dispatcher, cv utils.Cv) {
-	// TODO do some proccess
+func (node *Node) process(sender utils.Name, cv utils.Cv) {
+	if node.valideMessage(sender, cv) {
+		fmt.Printf("%s valided %s.%v success!\n", node.constr.Name, sender, cv)
+	}
 }
 
-func (node Node) commit(sender *Dispatcher, cv utils.Cv) {
+func (node *Node) commit(sender utils.Name, set utils.CvSet) {
+}
+
+func (node Node) valideMessage(sender utils.Name, cv utils.Cv) bool {
+	// TODO do some process
+	return true
 }
 
 //###################################################################################
@@ -156,14 +172,15 @@ func MakeBlcokchain(chain *utils.Chain, disps ...*Dispatcher) *Constraint {
 	return self.constr
 }
 
-func (chain Blockchain) propagate(*Dispatcher, utils.Cv) {
+func (chain *Blockchain) snapshoot() {
+	panic("implement me")
 }
 
-func (chain Blockchain) process(sender *Dispatcher, cv utils.Cv) {
-	// TODO do some upgrades
+func (chain *Blockchain) process(sender utils.Name, cv utils.Cv) {
+	panic("implement me")
 }
 
-func (chain Blockchain) commit(sender *Dispatcher, cv utils.Cv) {
+func (chain *Blockchain) commit(sender utils.Name, set utils.CvSet) {
 }
 
 //###################################################################################
@@ -181,12 +198,13 @@ func MakeConsensus(engine *consensus.Engine, disps ...*Dispatcher) *Constraint {
 	return self.constr
 }
 
-func (cons Consensus) propagate(*Dispatcher, utils.Cv) {
+func (cons *Consensus) snapshoot() {
+	panic("implement me")
 }
 
-func (cons Consensus) process(sender *Dispatcher, cv utils.Cv) {
-	// TODO do some consensus
+func (cons *Consensus) process(sender utils.Name, cv utils.Cv) {
+	panic("implement me")
 }
 
-func (cons Consensus) commit(sender *Dispatcher, cv utils.Cv) {
+func (cons *Consensus) commit(sender utils.Name, set utils.CvSet) {
 }

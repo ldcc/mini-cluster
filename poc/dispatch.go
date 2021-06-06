@@ -16,11 +16,12 @@ type Dispatcher struct {
 	constrs   constraints
 }
 
-func MakeConnector(name utils.Name) *Dispatcher {
+func MakeDispatcher(name utils.Name) *Dispatcher {
 	return &Dispatcher{
-		Name:    name,
-		stores:  make(utils.CvSet),
-		constrs: make(constraints),
+		Name:      name,
+		stores:    make(utils.CvSet),
+		validated: make(utils.CvSet),
+		constrs:   make(constraints),
 	}
 }
 
@@ -42,8 +43,7 @@ func (disp *Dispatcher) Empty() bool {
 	return disp.stores.Empty()
 }
 
-// TODO add mutex lock
-func (disp *Dispatcher) SendMessage(cv utils.Cv, sender utils.Name) {
+func (disp *Dispatcher) Propagate(sender utils.Name, cv utils.Cv) {
 	if disp.stores.Exist(cv) {
 		return
 	}
@@ -51,7 +51,9 @@ func (disp *Dispatcher) SendMessage(cv utils.Cv, sender utils.Name) {
 	disp.stores.AddCv(cv)
 	for cname, constr := range disp.constrs {
 		if cname != sender {
-			constr.Process(disp, cv)
+			func() {
+				constr.Propagate(disp.Name, cv)
+			}()
 		}
 	}
 }
@@ -64,12 +66,11 @@ func (disp *Dispatcher) CleanStores() {
 }
 
 // TODO add mutex lock
-func (disp *Dispatcher) Commit(name utils.Name, cv utils.Cv) {
+func (disp *Dispatcher) Commit(sender utils.Name, set utils.CvSet) {
 	for cname, constr := range disp.constrs {
-		if cname != name {
+		if cname != sender {
 			func() {
-				constr.Commit(disp, cv)
-				constr.Process(disp, cv)
+				constr.Commit(disp.Name, set)
 			}()
 		}
 	}

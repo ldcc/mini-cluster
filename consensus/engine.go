@@ -8,7 +8,7 @@ import (
 // Consensus Engine Typeclass
 //###################################################################################
 type engineI interface {
-	// TODO design a suit of `consensus engine interfaces`
+	// TODO design a suitable `consensus engine` interfaces
 }
 type Engine struct {
 	Name utils.Name
